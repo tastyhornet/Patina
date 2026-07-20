@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Patina — Tab Aging",
+  "version": "1.0.0",
+  "description": "Neglected tabs slowly age — fading, gathering dust, then cracking like old paper. Reopen one to watch it restore.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
