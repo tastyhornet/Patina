@@ -89,5 +89,23 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     case "RESET": // tab was visited, it's fresh again
       withstate((st) => stamp(st, tab, Date.now())).then(() => reply && reply({ ok: true }));
       return true;
+
+    case "SET_SETTINGS":
+      withstate((st) => {
+        st.settings = { ...st.settings, ...msg.settings };
+        return st.settings;
+      }).then((s) => { pushsettings(s); reply(s); });
+      return true;
+
+    case "FOCUS_TAB":
+      chrome.tabs.update(msg.tabId, { active: true });
+      if (msg.windowId != null) chrome.windows.update(msg.windowId, { focused: true });
+      reply && reply({ ok: true });
+      return true;
   }
 });
+
+async function pushsettings(settings) {
+  const tabs = await chrome.tabs.query({});
+  for (const t of tabs) chrome.tabs.sendMessage(t.id, { type: "SETTINGS", settings }).catch(() => {});
+}
