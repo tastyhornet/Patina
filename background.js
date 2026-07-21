@@ -7,12 +7,19 @@ const defaults = {
   threshold: 3600000, // neglect (ms) before decay starts — default 1 hour
 };
 
+function normurl(url) {
+  if (!url) return "";
+  try { const u = new URL(url); return u.origin + u.pathname; }
+  catch { return url; }
+}
+
 async function getstate() {
   const o = await chrome.storage.local.get(statekey);
   const s = o[statekey] || {};
   return {
     settings: { ...defaults, ...(s.settings || {}) },
-    tabs: s.tabs || {},
+    tabs: s.tabs || {}, // {tabid: {url, title, lastActive}}
+    urls: s.urls || {}, // {url: lastActive} — restart fallback
   };
 }
 async function setstate(st) { await chrome.storage.local.set({ [statekey]: st }); }
@@ -32,7 +39,13 @@ function withstate(fn) {
 
 function stamp(st, tab, when) {
   if (!tab) return;
-  st.tabs[tab.id] = { url: tab.url, title: tab.title, lastActive: when };
+  st.tabs[tab.id] = {
+    url: tab.url || st.tabs[tab.id]?.url,
+    title: tab.title || st.tabs[tab.id]?.title,
+    lastActive: when,
+  };
+  const key = normurl(tab.url);
+  if (key) st.urls[key] = when;
 }
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
