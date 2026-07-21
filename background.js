@@ -52,3 +52,17 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   const t = await chrome.tabs.get(tabId).catch(() => null);
   await withstate((st) => stamp(st, t || { id: tabId }, Date.now()));
 });
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  withstate((st) => { delete st.tabs[tabId]; return true; });
+});
+
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.url || info.title) {
+    withstate((st) => {
+      const prev = st.tabs[tabId];
+      stamp(st, tab, prev?.lastActive ?? Date.now());
+      return true;
+    });
+  }
+});
