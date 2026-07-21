@@ -62,10 +62,11 @@ function stamp(st, tab, when) {
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   const t = await chrome.tabs.get(tabId).catch(() => null);
   await withstate((st) => stamp(st, t || { id: tabId }, Date.now()));
+  updatebadge();
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  withstate((st) => { delete st.tabs[tabId]; return true; });
+  withstate((st) => { delete st.tabs[tabId]; return true; }).then(updatebadge);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
@@ -98,14 +99,17 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       return true;
 
     case "RESET": // tab was visited, it's fresh again
-      withstate((st) => stamp(st, tab, Date.now())).then(() => reply && reply({ ok: true }));
+      withstate((st) => stamp(st, tab, Date.now())).then(() => {
+        updatebadge();
+        reply && reply({ ok: true });
+      });
       return true;
 
     case "SET_SETTINGS":
       withstate((st) => {
         st.settings = { ...st.settings, ...msg.settings };
         return st.settings;
-      }).then((s) => { pushsettings(s); reply(s); });
+      }).then((s) => { pushsettings(s); updatebadge(); reply(s); });
       return true;
 
     case "FOCUS_TAB":
@@ -119,4 +123,17 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
 async function pushsettings(settings) {
   const tabs = await chrome.tabs.query({});
   for (const t of tabs) chrome.tabs.sendMessage(t.id, { type: "SETTINGS", settings }).catch(() => {});
+}
+
+async function updatebadge() {
+  const st = await getstate();
+  const now = Date.now();
+  const tabs = await chrome.tabs.query({});
+  let n = 0;
+  for (const t of tabs) {
+    if (t.active) continue;
+    const la = st.tabs[t.id]?.lastActive ?? st.urls[normurl(t.url)];
+    if (la != null && stageof(now - la, st.settings) >= 1) n++;
+  }
+  chrome.action.setBadgeText({ text: n ? String(n) : "" });
 }
