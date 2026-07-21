@@ -66,3 +66,28 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     });
   }
 });
+
+// --- talk to content scripts ---
+chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+  const tab = sender.tab;
+
+  switch (msg?.type) {
+    case "HELLO": // content boots, asks how neglected it is
+      withstate((st) => {
+        let la = tab ? st.tabs[tab.id]?.lastActive : undefined;
+        if (la == null && tab) la = st.urls[normurl(tab.url)];
+        if (la == null) la = Date.now();
+        stamp(st, tab, la);
+        return { lastActive: la, settings: st.settings };
+      }).then(reply);
+      return true;
+
+    case "REPORT": // content tells us when it was last visible
+      withstate((st) => stamp(st, tab, msg.lastActive)).then(() => reply && reply({ ok: true }));
+      return true;
+
+    case "RESET": // tab was visited, it's fresh again
+      withstate((st) => stamp(st, tab, Date.now())).then(() => reply && reply({ ok: true }));
+      return true;
+  }
+});
