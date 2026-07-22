@@ -14,6 +14,14 @@ if (window.top === window.self) {
       }
       #root.clean { display: none; }
       #root > div { position: absolute; inset: 0; }
+      .filter {
+        -webkit-backdrop-filter: var(--bf, none); backdrop-filter: var(--bf, none);
+        transition: -webkit-backdrop-filter 1.1s ease, backdrop-filter 1.1s ease;
+      }
+      .tint {
+        background: #6b4f2a; mix-blend-mode: multiply;
+        opacity: var(--tint, 0); transition: opacity 1.1s ease;
+      }
     `;
 
     function build() {
