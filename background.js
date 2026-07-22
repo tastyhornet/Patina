@@ -1,4 +1,5 @@
-// keeps track of when each tab was last looked at, saved so decay survives a restart
+// keeps track of when each tab was last looked at, saves it so decay survives a
+// restart, feeds the popup dashboard, and keeps the guilt badge up to date.
 
 const statekey = "patina.state";
 
@@ -6,12 +7,6 @@ const defaults = {
   enabled: true,
   threshold: 3600000, // neglect (ms) before decay starts — default 1 hour
 };
-
-function normurl(url) {
-  if (!url) return "";
-  try { const u = new URL(url); return u.origin + u.pathname; }
-  catch { return url; }
-}
 
 // stages are multiples of the threshold: 1x faded, 2x dusty, 4x cracked, 8x crumbling
 function stageof(age, settings) {
@@ -22,6 +17,12 @@ function stageof(age, settings) {
   if (r < 4) return 2;
   if (r < 8) return 3;
   return 4;
+}
+
+function normurl(url) {
+  if (!url) return "";
+  try { const u = new URL(url); return u.origin + u.pathname; }
+  catch { return url; }
 }
 
 async function getstate() {
@@ -59,27 +60,7 @@ function stamp(st, tab, when) {
   if (key) st.urls[key] = when;
 }
 
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  const t = await chrome.tabs.get(tabId).catch(() => null);
-  await withstate((st) => stamp(st, t || { id: tabId }, Date.now()));
-  updatebadge();
-});
-
-chrome.tabs.onRemoved.addListener((tabId) => {
-  withstate((st) => { delete st.tabs[tabId]; return true; }).then(updatebadge);
-});
-
-chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-  if (info.url || info.title) {
-    withstate((st) => {
-      const prev = st.tabs[tabId];
-      stamp(st, tab, prev?.lastActive ?? Date.now());
-      return true;
-    });
-  }
-});
-
-// --- talk to content scripts ---
+// --- talk to content scripts + popup ---
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const tab = sender.tab;
 
@@ -105,15 +86,19 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       });
       return true;
 
+    case "GET_DASHBOARD":
+      builddash().then(reply);
+      return true;
+
     case "SET_SETTINGS":
       withstate((st) => {
         st.settings = { ...st.settings, ...msg.settings };
         return st.settings;
-      }).then((s) => { pushsettings(s); updatebadge(); reply(s); });
-      return true;
-
-    case "GET_DASHBOARD":
-      builddash().then(reply);
+      }).then((s) => {
+        pushsettings(s);
+        updatebadge();
+        reply(s);
+      });
       return true;
 
     case "FOCUS_TAB":
@@ -129,39 +114,53 @@ async function pushsettings(settings) {
   for (const t of tabs) chrome.tabs.sendMessage(t.id, { type: "SETTINGS", settings }).catch(() => {});
 }
 
-async function updatebadge() {
-  const st = await getstate();
-  const now = Date.now();
-  const tabs = await chrome.tabs.query({});
-  let n = 0;
-  for (const t of tabs) {
-    if (t.active) continue;
-    const la = st.tabs[t.id]?.lastActive ?? st.urls[normurl(t.url)];
-    if (la != null && stageof(now - la, st.settings) >= 1) n++;
+// --- tab lifecycle ---
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  const t = await chrome.tabs.get(tabId).catch(() => null);
+  await withstate((st) => stamp(st, t || { id: tabId }, Date.now()));
+  chrome.tabs.sendMessage(tabId, { type: "FORCE_RESTORE" }).catch(() => {});
+  updatebadge();
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  withstate((st) => { delete st.tabs[tabId]; return true; }).then(updatebadge);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.url || info.title) {
+    withstate((st) => {
+      const prev = st.tabs[tabId];
+      stamp(st, tab, prev?.lastActive ?? Date.now());
+      return true;
+    });
   }
-  chrome.action.setBadgeText({ text: n ? String(n) : "" });
+});
+
+// tab ids change on restart, so re-seed each open tab's age from the per-url record
+async function reconcile() {
+  const tabs = await chrome.tabs.query({});
+  await withstate((st) => {
+    const next = {};
+    for (const t of tabs) {
+      const prev = st.tabs[t.id];
+      const la = prev?.lastActive ?? st.urls[normurl(t.url)] ?? Date.now();
+      next[t.id] = { url: t.url, title: t.title, lastActive: la };
+    }
+    st.tabs = next;
+    return true;
+  });
+  const [act] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (act) await withstate((st) => stamp(st, act, Date.now()));
+  makealarm();
+  updatebadge();
 }
 
-async function builddash() {
-  const st = await getstate();
-  const now = Date.now();
-  const tabs = await chrome.tabs.query({});
-  const list = tabs.map((t) => {
-    const la = st.tabs[t.id]?.lastActive ?? st.urls[normurl(t.url)] ?? now;
-    const age = now - la;
-    return {
-      id: t.id,
-      windowId: t.windowId,
-      title: t.title || t.url || "(untitled)",
-      url: t.url || "",
-      favIconUrl: t.favIconUrl || "",
-      age,
-      stage: t.active ? 0 : stageof(age, st.settings),
-      active: t.active,
-    };
-  }).sort((a, b) => b.age - a.age);
-  return { settings: st.settings, list };
-}
+chrome.runtime.onStartup.addListener(reconcile);
+chrome.runtime.onInstalled.addListener(async () => {
+  await withstate((st) => { st.settings = { ...defaults, ...st.settings }; return true; });
+  chrome.action.setBadgeBackgroundColor({ color: "#7a5c33" });
+  reconcile();
+});
 
 // --- housekeeping ---
 function makealarm() { chrome.alarms.create("patina.tick", { periodInMinutes: 1 }); }
@@ -178,3 +177,8 @@ async function freshenactive() {
 }
 
 makealarm();
+
+// idea for later: auto-close tabs left crumbling for way too long
+// async function reap(){ const st=await getstate(); const now=Date.now();
+//   for(const t of await chrome.tabs.query({})){ const la=st.tabs[t.id]?.lastActive;
+//     if(la && now-la > st.settings.threshold*40) chrome.tabs.remove(t.id); } }
