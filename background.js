@@ -162,3 +162,19 @@ async function builddash() {
   }).sort((a, b) => b.age - a.age);
   return { settings: st.settings, list };
 }
+
+// --- housekeeping ---
+function makealarm() { chrome.alarms.create("patina.tick", { periodInMinutes: 1 }); }
+chrome.alarms.onAlarm.addListener((a) => {
+  if (a.name !== "patina.tick") return;
+  freshenactive();
+  updatebadge();
+});
+
+async function freshenactive() {
+  const tabs = await chrome.tabs.query({ active: true });
+  if (!tabs.length) return;
+  await withstate((st) => { for (const t of tabs) stamp(st, t, Date.now()); return true; });
+}
+
+makealarm();
