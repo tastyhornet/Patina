@@ -112,6 +112,10 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       }).then((s) => { pushsettings(s); updatebadge(); reply(s); });
       return true;
 
+    case "GET_DASHBOARD":
+      builddash().then(reply);
+      return true;
+
     case "FOCUS_TAB":
       chrome.tabs.update(msg.tabId, { active: true });
       if (msg.windowId != null) chrome.windows.update(msg.windowId, { focused: true });
@@ -136,4 +140,25 @@ async function updatebadge() {
     if (la != null && stageof(now - la, st.settings) >= 1) n++;
   }
   chrome.action.setBadgeText({ text: n ? String(n) : "" });
+}
+
+async function builddash() {
+  const st = await getstate();
+  const now = Date.now();
+  const tabs = await chrome.tabs.query({});
+  const list = tabs.map((t) => {
+    const la = st.tabs[t.id]?.lastActive ?? st.urls[normurl(t.url)] ?? now;
+    const age = now - la;
+    return {
+      id: t.id,
+      windowId: t.windowId,
+      title: t.title || t.url || "(untitled)",
+      url: t.url || "",
+      favIconUrl: t.favIconUrl || "",
+      age,
+      stage: t.active ? 0 : stageof(age, st.settings),
+      active: t.active,
+    };
+  }).sort((a, b) => b.age - a.age);
+  return { settings: st.settings, list };
 }
