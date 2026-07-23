@@ -124,6 +124,28 @@ if (window.top === window.self) {
       (document.documentElement || document.body).appendChild(host);
     }
 
+    function apply(d, stage) {
+      if (!host) build();
+      const i = Math.max(0.3, Math.min(1.8, settings?.intensity ?? 1));
+      const clamp = (v) => Math.max(0, Math.min(1, v));
+      const r = root.style;
+      r.setProperty(
+        "--bf",
+        `sepia(${(0.15 + 0.55 * d).toFixed(3)}) ` +
+          `saturate(${(1 - 0.85 * d).toFixed(3)}) ` +
+          `brightness(${(1 - 0.2 * d).toFixed(3)}) ` +
+          `contrast(${(1 - 0.14 * d).toFixed(3)})`
+      );
+      r.setProperty("--tint", clamp((0.12 + 0.34 * d) * i).toFixed(3));
+      r.setProperty("--grain", stage >= 2 ? clamp((0.14 + 0.3 * d) * i).toFixed(3) : (0.05 * i).toFixed(3));
+      r.setProperty("--cracks", stage >= 3 ? clamp((0.3 + 0.5 * d) * i).toFixed(3) : "0");
+      r.setProperty("--vig", clamp((0.1 + 0.5 * d) * i).toFixed(3));
+      r.setProperty("--ash", stage >= 4 ? "1" : "0");
+      root.classList.remove("clean");
+      root.style.opacity = "1";
+      shownstage = stage;
+    }
+
     function clean() {
       if (!root) return;
       if (!root.classList.contains("clean")) root.classList.add("clean");
