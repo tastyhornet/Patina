@@ -177,5 +177,54 @@ if (window.top === window.self) {
         restoring = false;
       }, 950);
     }
+
+    function report(now, force) {
+      if (force || now - lastreport > 12000) {
+        lastreport = now;
+        chrome.runtime.sendMessage({ type: "REPORT", lastActive: lastactive }).catch(() => {});
+      }
+    }
+
+    function tick() {
+      if (restoring) return;
+      if (!settings || !settings.enabled) {
+        clean();
+        return;
+      }
+      const now = Date.now();
+      if (document.visibilityState === "visible") {
+        lastactive = now;
+        report(now, false);
+        clean();
+        return;
+      }
+      const { d, stage } = decayof(now - lastactive, settings.threshold);
+      if (stage === 0) clean();
+      else apply(d, stage);
+    }
+
+    function onreveal() {
+      const now = Date.now();
+      const { d, stage } = decayof(now - lastactive, settings?.threshold ?? Infinity);
+      if (stage > 0) {
+        apply(d, stage);
+        requestAnimationFrame(() => requestAnimationFrame(restore));
+      } else {
+        clean();
+      }
+      lastactive = now;
+      chrome.runtime.sendMessage({ type: "RESET" }).catch(() => {});
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") onreveal();
+      else {
+        lastactive = Date.now();
+        report(lastactive, true);
+      }
+    });
+    window.addEventListener("focus", () => {
+      if (document.visibilityState === "visible") onreveal();
+    });
   })();
 }
