@@ -2,7 +2,10 @@
 if (window.top === window.self) {
   (() => {
     let settings = null;
+    let lastactive = Date.now(); // last time the tab was on screen
     let shownstage = 0;
+    let restoring = false;
+    let lastreport = 0;
     let host = null;
     let root = null;
 
@@ -73,6 +76,16 @@ if (window.top === window.self) {
         100% { opacity: 0; transform: scale(3.2); }
       }
     `;
+
+    // fade curve, same numbers as the background worker
+    function decayof(age, threshold) {
+      if (age < threshold) return { d: 0, stage: 0 };
+      const r = age / threshold;
+      const stage = r < 2 ? 1 : r < 4 ? 2 : r < 8 ? 3 : 4;
+      let d = Math.min(1, Math.log2(r) / 3.5);
+      d = Math.max(0.12, d);
+      return { d, stage };
+    }
 
     function build() {
       host = document.createElement("div");
