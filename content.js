@@ -84,6 +84,29 @@ if (window.top === window.self) {
       root = document.createElement("div");
       root.id = "root";
       root.className = "clean";
+      const layer = (cls) => {
+        const d = document.createElement("div");
+        d.className = cls;
+        return d;
+      };
+      const filter = layer("filter");
+      const tint = layer("tint");
+      const grainl = layer("grain");
+      const crackl = layer("cracks");
+      const vignette = layer("vignette");
+      const ash = layer("ash");
+      const sweep = layer("sweep");
+      for (let i = 0; i < 16; i++) {
+        const m = document.createElement("div");
+        m.className = "mote";
+        const size = 2 + Math.random() * 4;
+        m.style.width = m.style.height = size + "px";
+        m.style.left = Math.random() * 100 + "%";
+        m.style.animationDuration = 7 + Math.random() * 9 + "s";
+        m.style.animationDelay = -Math.random() * 12 + "s";
+        ash.appendChild(m);
+      }
+      root.append(filter, tint, grainl, crackl, vignette, ash, sweep);
       shadow.append(style, root);
       (document.documentElement || document.body).appendChild(host);
     }
