@@ -75,6 +75,17 @@ if (window.top === window.self) {
         28%  { opacity: .55; }
         100% { opacity: 0; transform: scale(3.2); }
       }
+      #root.restoring .filter,
+      #root.restoring .tint,
+      #root.restoring .grain,
+      #root.restoring .cracks,
+      #root.restoring .vignette,
+      #root.restoring .ash {
+        opacity: 0 !important;
+        -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+        transition: opacity .5s ease-out, backdrop-filter .5s ease-out;
+      }
+      #root.restoring .sweep { animation: bloom .9s ease-out forwards; }
     `;
 
     // fade curve, same numbers as the background worker
@@ -150,6 +161,21 @@ if (window.top === window.self) {
       if (!root) return;
       if (!root.classList.contains("clean")) root.classList.add("clean");
       shownstage = 0;
+    }
+
+    // show the aged page for a beat then bloom it back
+    function restore() {
+      if (restoring || !root || shownstage === 0) {
+        clean();
+        return;
+      }
+      restoring = true;
+      root.classList.add("restoring");
+      setTimeout(() => {
+        root.classList.remove("restoring");
+        clean();
+        restoring = false;
+      }, 950);
     }
   })();
 }
