@@ -37,4 +37,29 @@
     for (const { el } of links) el.setAttribute("href", url);
   }
 
+  function loadimg(src, cross) {
+    return new Promise((ok, no) => {
+      const img = new Image();
+      if (cross) img.crossOrigin = cross;
+      img.onload = () => ok(img);
+      img.onerror = no;
+      img.src = src;
+    });
+  }
+
+  // fetch->blob is clean for same-origin icons; cors image as a backup
+  async function geticon(url) {
+    try {
+      const res = await fetch(url, { cache: "force-cache" });
+      if (!res.ok) throw 0;
+      const blob = await res.blob();
+      if (!blob || !blob.size) throw 0;
+      const obj = URL.createObjectURL(blob);
+      try { return await loadimg(obj, null); }
+      finally { URL.revokeObjectURL(obj); }
+    } catch {
+      return await loadimg(url, "anonymous");
+    }
+  }
+
 })();
