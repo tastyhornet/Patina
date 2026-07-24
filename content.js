@@ -226,5 +226,29 @@ if (window.top === window.self) {
     window.addEventListener("focus", () => {
       if (document.visibilityState === "visible") onreveal();
     });
+
+    chrome.runtime.onMessage.addListener((msg) => {
+      if (msg?.type === "SETTINGS") settings = msg.settings;
+      else if (msg?.type === "FORCE_RESTORE") onreveal();
+    });
+
+    function boot(attempt = 0) {
+      chrome.runtime.sendMessage({ type: "HELLO" }, (resp) => {
+        if (chrome.runtime.lastError || !resp) {
+          if (attempt < 5) setTimeout(() => boot(attempt + 1), 400);
+          return;
+        }
+        settings = resp.settings;
+        lastactive = resp.lastActive;
+        if (document.visibilityState === "visible") lastactive = Date.now();
+        tick();
+        setInterval(tick, 2000);
+      });
+    }
+
+    boot();
+
+    // idea for later: nudge with a toast on the page instead of the whole overlay
+    // function toast(text){ const t=document.createElement('div'); t.textContent=text; ... }
   })();
 }
