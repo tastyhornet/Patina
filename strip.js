@@ -62,4 +62,35 @@
     }
   }
 
+  function contain(g, img, s) {
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    if (!iw || !ih) return false;
+    const sc = Math.min(s / iw, s / ih);
+    const w = iw * sc, h = ih * sc;
+    g.clearRect(0, 0, s, s);
+    g.drawImage(img, (s - w) / 2, (s - h) / 2, w, h);
+    return true;
+  }
+
+  async function drawfavicon(d, stage, i) {
+    const t = ++token;
+    let img = null;
+    try { img = await geticon(baseurl()); } catch { img = null; }
+    if (t !== token) return;
+    const s = 32;
+    const paint = () => {
+      const c = document.createElement("canvas");
+      c.width = c.height = s;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      if (img) contain(g, img, s);
+      return c;
+    };
+    let url;
+    try { url = paint().toDataURL("image/png"); }
+    catch { img = null; url = paint().toDataURL("image/png"); }
+    if (t !== token) return;
+    seticon(url);
+  }
+
 })();
