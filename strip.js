@@ -94,6 +94,39 @@
     g.putImageData(im, 0, 0);
   }
 
+  function cracks(g, s, d) {
+    g.save();
+    g.strokeStyle = "rgba(28,16,6," + (0.5 + 0.4 * d).toFixed(2) + ")";
+    g.lineWidth = Math.max(1, s / 26);
+    g.lineJoin = "round";
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(s * 0.2, s * 0.13);
+    g.lineTo(s * 0.5, s * 0.5);
+    g.lineTo(s * 0.4, s * 0.72);
+    g.lineTo(s * 0.66, s * 0.96);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(s * 0.5, s * 0.5);
+    g.lineTo(s * 0.82, s * 0.38);
+    g.stroke();
+    g.restore();
+  }
+
+  // eat away pixels near the edges for the crumbling look
+  function crumble(g, s, d) {
+    const im = g.getImageData(0, 0, s, s);
+    const p = im.data;
+    for (let y = 0; y < s; y++) {
+      for (let x = 0; x < s; x++) {
+        const e = Math.min(x, y, s - 1 - x, s - 1 - y);
+        const pr = (1 - e / (s * 0.5)) * 0.5 * d;
+        if (pr > 0 && Math.random() < pr) p[(y * s + x) * 4 + 3] = 0;
+      }
+    }
+    g.putImageData(im, 0, 0);
+  }
+
   async function drawfavicon(d, stage, i) {
     const t = ++token;
     let img = null;
@@ -106,6 +139,8 @@
       const g = c.getContext("2d", { willReadFrequently: true });
       if (img) contain(g, img, s);
       age(g, s, d, stage, i);
+      if (stage >= 3) cracks(g, s, d);
+      if (stage >= 4) crumble(g, s, d);
       return c;
     };
     let url;
