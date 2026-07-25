@@ -6,6 +6,7 @@ const statekey = "patina.state";
 const defaults = {
   enabled: true,
   threshold: 3600000, // neglect (ms) before decay starts — default 1 hour
+  stripdecay: true, // also age the favicon + title
 };
 
 // stages are multiples of the threshold: 1x faded, 2x dusty, 4x cracked, 8x crumbling

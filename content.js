@@ -1,6 +1,8 @@
 // paints the aging overlay on the page itself, inside a closed shadow dom
 if (window.top === window.self) {
   (() => {
+    const strip = window.__patina || {};
+
     let settings = null;
     let lastactive = Date.now(); // last time the tab was on screen
     let shownstage = 0;
@@ -155,9 +157,11 @@ if (window.top === window.self) {
       root.classList.remove("clean");
       root.style.opacity = "1";
       shownstage = stage;
+      if (settings?.stripdecay) strip.update?.(d, stage, i);
     }
 
     function clean() {
+      strip.restore?.();
       if (!root) return;
       if (!root.classList.contains("clean")) root.classList.add("clean");
       shownstage = 0;
@@ -170,6 +174,7 @@ if (window.top === window.self) {
         return;
       }
       restoring = true;
+      strip.restore?.();
       root.classList.add("restoring");
       setTimeout(() => {
         root.classList.remove("restoring");
@@ -240,6 +245,7 @@ if (window.top === window.self) {
         }
         settings = resp.settings;
         lastactive = resp.lastActive;
+        strip.collect?.();
         if (document.visibilityState === "visible") lastactive = Date.now();
         tick();
         setInterval(tick, 2000);
