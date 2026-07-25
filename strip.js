@@ -150,4 +150,29 @@
     seticon(url);
   }
 
+  const marks = ["", "", "· ", "·· ", "🕸 "];
+  function stripmark(t) { return t.replace(/^(?:·+ |🕸 )/, ""); }
+
+  // called from content.js as a tab ages
+  strip.update = (d, stage, i) => {
+    active = true;
+    drawfavicon(d, stage, i);
+    const next = (marks[stage] || "") + stripmark(document.title);
+    if (document.title !== next) document.title = next;
+  };
+
+  strip.restore = () => {
+    if (!active) return;
+    active = false;
+    token++; // cancel any pending draw
+    if (links) for (const { el, orig } of links) {
+      if (orig == null) el.removeAttribute("href");
+      else el.setAttribute("href", orig);
+    }
+    const clean = stripmark(document.title);
+    if (document.title !== clean) document.title = clean;
+  };
+
+  // idea for later: tint the favicon blue instead of aging it, like a tab going cold
+  // strip.frost = (d) => { ... hue-rotate toward blue + white frost specks ... }
 })();
