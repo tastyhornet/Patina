@@ -196,6 +196,12 @@ if (window.top === window.self) {
         clean();
         return;
       }
+      // preview mode: hold a stage no matter what (popup preview / testing)
+      if (settings.forcestage) {
+        const dmap = { 1: 0.2, 2: 0.45, 3: 0.7, 4: 0.95 };
+        apply(dmap[settings.forcestage] ?? 0.95, settings.forcestage);
+        return;
+      }
       const now = Date.now();
       if (document.visibilityState === "visible") {
         lastactive = now;
@@ -209,6 +215,7 @@ if (window.top === window.self) {
     }
 
     function onreveal() {
+      if (settings?.forcestage) return;
       const now = Date.now();
       const { d, stage } = decayof(now - lastactive, settings?.threshold ?? Infinity);
       if (stage > 0) {

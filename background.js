@@ -8,6 +8,7 @@ const defaults = {
   threshold: 3600000, // neglect (ms) before decay starts — default 1 hour
   intensity: 1.0,
   stripdecay: true, // also age the favicon + title
+  forcestage: 0, // preview: hold a stage (0 = off)
 };
 
 // stages are multiples of the threshold: 1x faded, 2x dusty, 4x cracked, 8x crumbling
