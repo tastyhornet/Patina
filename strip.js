@@ -73,6 +73,18 @@
     return true;
   }
 
+  // fallback disc when we can't read the real icon
+  function disc(g, s) {
+    g.clearRect(0, 0, s, s);
+    const grd = g.createRadialGradient(s * 0.4, s * 0.35, 1, s / 2, s / 2, s / 2);
+    grd.addColorStop(0, "#e9d6b0");
+    grd.addColorStop(1, "#7a5c33");
+    g.fillStyle = grd;
+    g.beginPath();
+    g.arc(s / 2, s / 2, s / 2 - 1, 0, Math.PI * 2);
+    g.fill();
+  }
+
   // desaturate + sepia + darken, with grain from stage 2
   function age(g, s, d, stage, i) {
     const im = g.getImageData(0, 0, s, s);
@@ -137,7 +149,7 @@
       const c = document.createElement("canvas");
       c.width = c.height = s;
       const g = c.getContext("2d", { willReadFrequently: true });
-      if (img) contain(g, img, s);
+      if (!img || !contain(g, img, s)) disc(g, s);
       age(g, s, d, stage, i);
       if (stage >= 3) cracks(g, s, d);
       if (stage >= 4) crumble(g, s, d);
