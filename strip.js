@@ -156,7 +156,11 @@
   // called from content.js as a tab ages
   strip.update = (d, stage, i) => {
     active = true;
-    drawfavicon(d, stage, i);
+    const key = stage + ":" + Math.round(d * 5); // only redraw on real change
+    if (key !== lastkey) {
+      lastkey = key;
+      drawfavicon(d, stage, i);
+    }
     const next = (marks[stage] || "") + stripmark(document.title);
     if (document.title !== next) document.title = next;
   };
