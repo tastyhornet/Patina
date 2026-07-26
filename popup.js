@@ -1,4 +1,4 @@
-// hall of neglect — lists tabs by how long they've been ignored.
+// hall of neglect — lists tabs by how long they've been ignored, plus the settings.
 
 const $ = (id) => document.getElementById(id);
 const names = ["Fresh", "Faded", "Dusty", "Cracked", "Crumbling"];
@@ -70,5 +70,19 @@ async function render() {
     list.append(li);
   }
 }
+
+async function save() {
+  const settings = {
+    enabled: $("enabled").checked,
+    threshold: Number($("threshold").value),
+    stripdecay: $("stripdecay").checked,
+  };
+  await send({ type: "SET_SETTINGS", settings });
+  render();
+}
+
+$("enabled").addEventListener("change", save);
+$("threshold").addEventListener("change", save);
+$("stripdecay").addEventListener("change", save);
 
 render();
