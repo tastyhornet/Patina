@@ -11,13 +11,20 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["overlay/css.js", "overlay/decay.js", "overlay/strip-canvas.js", "overlay/strip.js", "overlay/overlay.js", "content.js"],
+      "js": [
+        "overlay/css.js",
+        "overlay/decay.js",
+        "overlay/strip-canvas.js",
+        "overlay/strip.js",
+        "overlay/overlay.js",
+        "overlay/content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_title": "Patina — Hall of Neglect"
   },
   "icons": {
