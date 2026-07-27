@@ -5,7 +5,8 @@
   "description": "Neglected tabs slowly age — fading, gathering dust, then cracking like old paper. Reopen one to watch it restore.",
   "permissions": ["tabs", "storage", "alarms"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background/index.js",
+    "type": "module"
   },
   "content_scripts": [
     {
