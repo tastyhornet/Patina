@@ -66,9 +66,9 @@ In the popup:
 
 There's a Hall of Neglect list under that, tabs ranked by how long you've ignored them, worst on top. Click one to jump to it (and restore it). The toolbar badge just counts how many are currently rotting, in case you needed the guilt number.
 
-## Shipping it
+## Publishing it
 
-The bounty wants this on the Chrome Web Store with 5 real installs. That part's on the owner, not something the code can do by itself: it needs the dev account ($5 one-time, ID check), a review pass, and actual people installing it. Rough steps:
+If you want this on the Chrome Web Store, the store side needs a dev account ($5 one-time, with an ID check) and a review pass before it goes live. Rough steps:
 
 1. Zip the folder contents (the files, not the wrapping folder)
 2. Register on the Chrome Web Store dev dashboard
