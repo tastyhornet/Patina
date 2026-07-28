@@ -4,9 +4,11 @@ Tabs you stop looking at start to rot. They fade, pick up grain and dust, crack,
 
 ## Why I made this
 
-I'm a tab hoarder. Like 40 open at any time, half of them "I'll read that later" articles I never read. Closing them feels wrong, keeping them feels worse. So instead of another "you have too many tabs" nag, I wanted the tabs themselves to look guilty. Ignore one long enough and its little favicon literally starts falling apart in the strip. Weirdly it works on me.
+I'm a tab hoarder. Like 40 open at any time, half of them "I'll read that later" articles I never read. Closing them feels wrong, keeping them feels worse.
 
-Same core idea as a few "tab decay" extensions floating around, but I took it in an antique/aged-paper direction and did the aging with real canvas work instead of a flat filter.
+So instead of another "you have too many tabs" nag, I wanted the tabs themselves to look guilty. Ignore one long enough and its little favicon starts falling apart in the strip. Weirdly, it works on me.
+
+Same core idea as a few "tab decay" extensions floating around, but I took it in an aged-paper direction and did the aging with real canvas work instead of a flat filter.
 
 ## How rotten it gets
 
