@@ -49,7 +49,9 @@ If a favicon can't be read (rare cross-origin case) it falls back to a generic a
 | `popup.*` | the Hall of Neglect list + settings |
 | `icons/` | cracked-parchment icons |
 
-`background.js` is the one that matters for surviving a restart. Tab IDs get reshuffled when Chrome reopens, so it also keeps a per-URL record and re-seeds each tab's age from that on startup. Otherwise every rotten tab would come back shiny.
+`background.js` is the one that matters for surviving a restart. Tab IDs get reshuffled when Chrome reopens, so it also keeps a per-URL record and re-seeds each tab's age from that on startup.
+
+Without that, every rotten tab would come back shiny.
 
 ## Running it yourself
 
