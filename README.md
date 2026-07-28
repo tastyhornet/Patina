@@ -25,7 +25,9 @@ The fade underneath is a smooth curve (a log thing), so a tab keeps darkening be
 
 ## It doesn't touch your pages
 
-This was the part I cared about most. The decay is a `pointer-events: none` overlay sitting in a closed shadow DOM, drawn with `backdrop-filter`. I never put a `filter` on the page root, because that quietly breaks every `position: fixed` header on the web. Clicks and scrolls pass straight through. The page's own JavaScript never knows it's there. Runs at `document_idle` so it's not fighting the page load either.
+This was the part I cared about most. The decay is a `pointer-events: none` overlay in a closed shadow DOM, drawn with `backdrop-filter`.
+
+I never put a `filter` on the page root, because that quietly breaks every `position: fixed` header on the web. Clicks and scrolls pass straight through, and the page's own JavaScript never knows it's there. It runs at `document_idle`, so it's not fighting the page load either.
 
 ## The tab-strip trick
 
